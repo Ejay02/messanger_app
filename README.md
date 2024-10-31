@@ -33,7 +33,7 @@ Make sure you have the following installed:
 ### Clone repository
 
 ```bash
-git clone [your-repository-url]
+git clone https://github.com/Ejay02/messanger_app.git
 cd [project-name]
 ```
 
