@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -80,5 +81,21 @@ export class AuthService {
 
     return { token: jwt };
     // return user;
+  }
+
+  async verifyJwt(jwt: string): Promise<{ exp: number }> {
+    if (!jwt) {
+      throw new UnauthorizedException('Invalid JWT token');
+    }
+
+    try {
+      const { exp } = await this.jwtService.verifyAsync(jwt);
+
+      return { exp };
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'An error occurred verifying the JWT',
+      );
+    }
   }
 }
