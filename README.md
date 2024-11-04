@@ -66,6 +66,8 @@ POSTGRES_PORT=5432
 # Pgadmin Config
 PGADMIN_DEFAULT_EMAIL=
 PGADMIN_DEFAULT_PASSWORD=
+
+JWT_SECRET=
 ```
 
 ## Running the Application
