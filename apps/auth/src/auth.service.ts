@@ -85,20 +85,6 @@ export class AuthService {
     return user;
   }
 
-  // async validateUser(email: string, password: string): Promise<UserEntity> {
-  //   const user = await this.findByEmail(email);
-
-  //   const existingUser = !!user;
-
-  //   if (!existingUser) return null;
-
-  //   const isPasswordValid = await this.isPasswordValid(password, user.password);
-
-  //   if (!isPasswordValid) return null;
-
-  //   return user;
-  // }
-
   async login(existingUser: Readonly<ExistingUserDTO>) {
     try {
       const { email, password } = existingUser;
