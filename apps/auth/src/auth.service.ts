@@ -17,7 +17,7 @@ export class AuthService {
   constructor(
     @Inject('UsersRepositoryInterface')
     private readonly usersRepository: UsersRepositoryInterface,
- 
+
     private readonly jwtService: JwtService,
   ) {}
 
@@ -25,7 +25,7 @@ export class AuthService {
     return this.usersRepository.findAll();
   }
 
-  async findByEmail(email: string): Promise<UserEntity> {
+  async findByEmail(email: string): Promise<UserEntity | null> {
     return this.usersRepository.findByCondition({
       where: { email },
       select: ['id', 'firstName', 'lastName', 'email', 'password'],
@@ -33,7 +33,7 @@ export class AuthService {
   }
 
   async hashPassword(password: string): Promise<string> {
-    return bcrypt.hash(password, 12);
+    return await bcrypt.hash(password, 12);
   }
 
   async register(newUser: Readonly<NewUserDTO>): Promise<UserEntity> {
@@ -59,29 +59,66 @@ export class AuthService {
     return savedUser;
   }
 
-  async login(existingUser: Readonly<ExistingUserDTO>) {
-    const { email, password } = existingUser;
+  async isPasswordValid(
+    password: string,
+    hashedPassword: string,
+  ): Promise<boolean> {
+    return await bcrypt.compare(password, hashedPassword);
+  }
 
-    // Find user by email
+  async validateUser(
+    email: string,
+    password: string,
+  ): Promise<UserEntity | null> {
     const user = await this.findByEmail(email);
 
     if (!user) {
-      throw new UnauthorizedException('No user exist with this email address');
+      return null;
     }
 
-    // Compare provided password with hashed password in the database
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await this.isPasswordValid(password, user.password);
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid password');
+      return null;
     }
 
-    const jwt = await this.jwtService.signAsync({
-      user,
-    });
+    return user;
+  }
 
-    return { token: jwt };
-    // return user;
+  // async validateUser(email: string, password: string): Promise<UserEntity> {
+  //   const user = await this.findByEmail(email);
+
+  //   const existingUser = !!user;
+
+  //   if (!existingUser) return null;
+
+  //   const isPasswordValid = await this.isPasswordValid(password, user.password);
+
+  //   if (!isPasswordValid) return null;
+
+  //   return user;
+  // }
+
+  async login(existingUser: Readonly<ExistingUserDTO>) {
+    try {
+      const { email, password } = existingUser;
+      const user = await this.validateUser(email, password);
+
+      if (!user) {
+        throw new UnauthorizedException(
+          'No user exist with this email address',
+        );
+      }
+
+      delete user.password;
+      const jwt = await this.jwtService.signAsync({
+        user,
+      });
+
+      return { token: jwt, user };
+    } catch (error) {
+      throw new Error("Couldn't complete login");
+    }
   }
 
   async verifyJwt(jwt: string): Promise<{ exp: number }> {
